@@ -9,6 +9,5 @@ import (
 func main() {
 	beego.Run()
 	//分支
-	
 }
 
