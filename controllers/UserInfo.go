@@ -2,15 +2,24 @@ package controllers
 
 import (
 	"github.com/astaxie/beego"
-	"itcastCms/models"
-	"time"
 	"github.com/astaxie/beego/orm"
+	"time"
 	"strings"
 	"strconv"
+	"CMSTest/models"
 )
 
 type UserInfoController struct {
 	beego.Controller
+}
+
+//记录分页信息
+type RecordPagingData struct {
+	PageIndex  int
+	PageSize   int
+	Name       string
+	Remark     string
+	TotalCount int
 }
 
 func (this *UserInfoController) Index() {
@@ -20,13 +29,30 @@ func (this *UserInfoController) Index() {
 func (this *UserInfoController) GetUserInfo() {
 	pageIndex, _ := this.GetInt("page") //当前页码 easyui表单提交过来的数据
 	pageSize, _ := this.GetInt("rows")  //每页展示的条数
-	users := new([]models.UserInfo)
-	//var users []models.UserInfo
-	newOrm := orm.NewOrm()
-	newOrm.QueryTable("user_info").Filter("del_flag", 0).OrderBy("id").Limit(pageSize, (pageIndex-1)*pageSize).All(users)
-	count, _ := newOrm.QueryTable("user_info").Filter("del_flag", 0).Filter("del_flag", 0).Count()
-	this.Data["json"] = map[string]interface{}{"rows": users, "total": count}
+	name := this.GetString("name")
+	remark := this.GetString("remark")
+	recordPaging := RecordPagingData{PageIndex: pageIndex, PageSize: pageSize, Name: name, Remark: remark}
+	userData := recordPaging.SearchUserData()
+	this.Data["json"] = map[string]interface{}{"rows": &userData, "total": recordPaging.TotalCount}
 	this.ServeJSON()
+
+}
+func (this *RecordPagingData) SearchUserData() (*[]models.UserInfo) {
+	newOrm := orm.NewOrm()
+	queryTable := newOrm.QueryTable("user_info")
+	if this.Name != "" {
+		queryTable = queryTable.Filter("user_name__icontains", this.Name)
+	}
+	if this.Remark != "" {
+		queryTable = queryTable.Filter("remark__icontains", this.Remark)
+	}
+	queryTable = queryTable.Filter("del_flag", 0)
+	count, _ := queryTable.Count()
+	this.TotalCount = int(count)
+	start := (this.PageIndex - 1) * this.PageSize
+	userInfo := new([]models.UserInfo)
+	queryTable.OrderBy("Id").Limit(this.PageSize, start).All(userInfo)
+	return userInfo
 }
 
 func (this *UserInfoController) AddUser() {
@@ -46,6 +72,7 @@ func (this *UserInfoController) AddUser() {
 	}
 	this.ServeJSON()
 }
+
 func (this *UserInfoController) DeleteUser() {
 	ids := this.GetString("strId")
 	strIds := strings.Split(ids, ",")
@@ -107,5 +134,53 @@ func (this *UserInfoController) EditUserInfo() {
 	} else {
 		this.Data["json"] = map[string]interface{}{"flag": "fail", "msg": "修改失败"}
 	}
+	this.ServeJSON()
+}
+
+func (this *UserInfoController) ShowSetUserRole() {
+	userId, _ := this.GetInt("userId") //得到被修改角色信息的人员ID
+	newOrm := orm.NewOrm()
+	var userInfo models.UserInfo
+	newOrm.QueryTable("user_info").Filter("id", userId).One(&userInfo)
+	newOrm.LoadRelated(&userInfo, "Roles")
+	var allRoles []models.RoleInfo
+	newOrm.QueryTable("role_info").Filter("del_flag", 0).All(&allRoles)
+	this.Data["allRoles"] = allRoles //全部权限
+	this.Data["userInfo"] = userInfo //选择的权限
+	this.TplName = "UserInfo/ShowSetUserRole.html"
+}
+
+//有两种方式可以获取form的值
+//roleInfo.RoleName=this.GetString("roleName")
+//roleInfo.Remark=this.GetString("roleRemark")
+//直接通过getString取值
+//另外一种如下:
+func (this *UserInfoController) SetUserRole() {
+	allKeys := this.Ctx.Request.PostForm
+	beego.Info("复选框信息",allKeys)
+	var list []int
+	for key, _ := range allKeys {
+		if strings.Contains(key, "cba_") {//只有被选中的复选框才会提交给客户端~
+			id := strings.Replace(key, "cba_", "", -1)
+			roleID, _ := strconv.Atoi(id)
+			list = append(list, roleID)
+		}
+	}
+	userId, _ := this.GetInt("userId")
+	beego.Info("隐藏域选择的用户名",userId)
+	userInfo := models.UserInfo{}
+	newOrm := orm.NewOrm()
+	newOrm.QueryTable("user_info").Filter("id",userId).One(&userInfo)
+	newOrm.LoadRelated(&userInfo,"Roles")
+	queryM2M := newOrm.QueryM2M(&userInfo, "Roles")
+	for _,role := range userInfo.Roles{
+		queryM2M.Remove(role)
+	}
+	roleInfo := models.RoleInfo{}
+	for i:=0;i<len(list);i++{
+		newOrm.QueryTable("role_info").Filter("id",list[i]).One(&roleInfo)
+		queryM2M.Add(roleInfo)
+	}
+	this.Data["json"]=map[string]interface{}{"flag":"ok"}
 	this.ServeJSON()
 }

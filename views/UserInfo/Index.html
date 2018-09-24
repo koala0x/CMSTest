@@ -12,11 +12,22 @@
         $(function () {
             //页面夹杂完成后隐藏
             $("#addDiv").css("display", "none");
+            //修改框
             $("#editDiv").css("display", "none");
+            //角色权限配置
+            $('#setRoleDiv').css("display", "none")
+            //搜索
+            $('#btnSearch').click(function () {
+                var pars = {
+                    name: $('#txtSearchUName').val(),
+                    remark: $('#txtSearchRemark').val()
+                }
+                loadData(pars);
+            })
             loadData();
         })
 
-        function loadData() {
+        function loadData(pars) {
             $('#tt').datagrid({
                 url: '/Admin/UserInfo/GetUserInfo',
                 title: '用户数据表格',
@@ -31,7 +42,7 @@
                 pageSize: 5,//页大小，一页多少条数据
                 pageNumber: 1,//当前页，默认的
                 pageList: [5, 10, 20],
-                queryParams: {},//往后台传递参数
+                queryParams: pars,//往后台传递参数
                 columns: [[
                     {field: 'ck', checkbox: true, align: 'left', width: 50},
                     {field: 'Id', title: '编号', width: 80},
@@ -66,8 +77,56 @@
                     handler: function () {
                         editUser()
                     }
+                }, {
+                    id: "btnSetUserRole",
+                    text: "为用户分配角色",
+                    iconCls: "icon-edit",
+                    handler: function () {
+                        //设置用户角色
+                        showSetUserRole()
+                    }
                 }]
             });
+        }
+
+        function showSetUserRole() {
+            var rows = $('#tt').datagrid('getSelections')
+            if (rows.length != 1) {
+                $.messager.alert("提示", "用户分配角色错误?", "erroe")
+                return
+            }
+            var userId = rows[0].Id
+            $('#setRoleFrame').attr("src", "/Admin/UserInfo/ShowSetUserRole?userId=" + userId)
+            $('#setRoleDiv').css("display", "block")
+            $('#setRoleDiv').dialog({
+                title: '为用户分配角色信息',
+                width: 300,
+                height: 300,
+                collapsible: true, //可折叠
+                maximizable: true, //最大化
+                resizable: true,//可缩放
+                modal: true,//模态，表示只有将该窗口关闭才能修改页面中其它内容
+                buttons: [{ //按钮组
+                    text: 'Ok',//按钮上的文字
+                    iconCls: 'icon-ok',
+                    handler: function () {
+                        let contentWindow = $("#setRoleFrame")[0].contentWindow;
+                        contentWindow.SubForm()
+                    }
+                }, {
+                    text: 'Cancel',
+                    handler: function () {
+                        $('#setRoleDiv').dialog('close');
+                    }
+                }]
+            })
+        }
+
+        //用户角色设置完成后关闭弹窗
+        function AfterSet(data) {
+            if (data.flag == "ok") {
+                $('#setRoleDiv').dialog('close');
+            }
         }
 
         //更新用户信息
@@ -124,7 +183,7 @@
                     $.messager.alert('提示', '请求网络失败', 'error')
                 }
             })
-
+            $("#tt").datagrid('clearSelections');
         }
 
         //删除用户
@@ -200,6 +259,9 @@
     </script>
 </head>
 <body>
+用户名:<input type="text" id="txtSearchUName"/>&nbsp;&nbsp;
+备注:<input type="text" id="txtSearchRemark"/>
+<a href="#" class="easyui-linkbutton" data-options="iconCls:'icon-search'" style="width:80px" id="btnSearch">Search</a>
 <table id="tt" style="width: 700px;" title="标题，可以使用代码进行初始化，也可以使用这种属性的方式" iconcls="icon-edit"></table>
 <div id="addDiv">
     <form id="addForm">
@@ -237,6 +299,8 @@
         </table>
     </form>
 </div>
-
+<div id="setRoleDiv">
+    <iframe id="setRoleFrame" frameborder="0" width="100%" height="100%"></iframe>
+</div>
 </body>
 </html>
