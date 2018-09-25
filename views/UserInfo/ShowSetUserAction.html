@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>为用户分配权限</title>
+    <script type="text/javascript" src="/static/js/jquery.js"></script>
+    <script type="text/javascript" src="/static/js/jquery.easyui.min.js"></script>
+    <script type="text/javascript" src="/static/js/easyui-lang-zh_CN.js"></script>
+    <link href="/static/css/themes/default/easyui.css" rel="stylesheet"/>
+    <link href="/static/css/themes/icon.css" rel="stylesheet"/>
+    <script type="text/javascript">
+        $(function () {
+            //给用户分配权限
+            $(".selections").click(function () {
+                bindSetUserAction($(this))
+            })
+            //单击按钮删除用户的权限。
+            $(".btnDeleteActions").click(function () {
+                bindDeleteActions($(this))
+            })
+        })
+
+        //删除用户的权限。
+        function bindDeleteActions(control) {
+            var userId ={{.userInfo.Id}};//用户编号
+            var actionId = control.attr("ids");
+            $.post("/Admin/UserInfo/DeleteUserAction", {"actionId": actionId, "userId": userId}, function (data) {
+
+            })
+        }
+
+        function bindSetUserAction(control) {
+            var actionId = control.attr("ids");//获取选中的单选按钮的权限编号。
+            var userId ={{.userInfo.Id}};//用户编号
+            var isPass = control.val()//获取单选按钮的value值。
+            $.post("/Admin/UserInfo/SetUserAction", {
+                "actionId": actionId,
+                "userId": userId,
+                "isPass": isPass
+            }, function (data) {
+
+            })
+        }
+    </script>
+</head>
+<body>
+为用户<span style="font-size:14px;color:red;font-weight: bolder">{{.userInfo.UserName}}</span>分配权限
+<table>
+    <tr>
+        <td>编号</td>
+        <td>权限名称</td>
+        <td>Url</td>
+        <td>操作</td>
+    </tr>
+{{range .actionInfos}}
+    <tr>
+        <td>{{.Id}}</td>
+        <td>{{.ActionInfoName}}</td>
+        <td>{{.Url}}</td>
+        <td>
+        {{/*id为每个权限对应的id,所以遍历中间表user_action时候,对应的应该查找actioninfo对象所对应的id*/}}
+        {{if checkUserAction $.userActions .Id}}
+        {{if checkPassUserAction $.userActions .Id}}
+            <input type="radio" value="true" class="selections" checked="checked" name="cba_{{.Id}}" ids="{{.Id}}">允许
+            <input type="radio" value="false" class="selections" name="cba_{{.Id}}" ids="{{.Id}}">禁止
+        {{else}}
+            <input type="radio" value="true" class="selections" name="cba_{{.Id}}" ids="{{.Id}}">允许
+            <input type="radio" value="false" class="selections" checked="checked" name="cba_{{.Id}}" ids="{{.Id}}">禁止
+        {{end}}
+        {{else}}
+            <input type="radio" value="true" class="selections" name="cba_{{.Id}}" ids="{{.Id}}">允许
+            <input type="radio" value="false" class="selections" name="cba_{{.Id}}" ids="{{.Id}}">禁止
+        {{end}}
+
+            <input type="button" value="删除" class="btnDeleteActions" ids="{{.Id}}">
+        </td>
+    </tr>
+{{end}}
+</table>
+</body>
+</html>

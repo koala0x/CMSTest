@@ -157,30 +157,57 @@ func (this *UserInfoController) ShowSetUserRole() {
 //另外一种如下:
 func (this *UserInfoController) SetUserRole() {
 	allKeys := this.Ctx.Request.PostForm
-	beego.Info("复选框信息",allKeys)
+	beego.Info("复选框信息", allKeys)
 	var list []int
 	for key, _ := range allKeys {
-		if strings.Contains(key, "cba_") {//只有被选中的复选框才会提交给客户端~
+		if strings.Contains(key, "cba_") { //只有被选中的复选框才会提交给客户端~
 			id := strings.Replace(key, "cba_", "", -1)
 			roleID, _ := strconv.Atoi(id)
 			list = append(list, roleID)
 		}
 	}
 	userId, _ := this.GetInt("userId")
-	beego.Info("隐藏域选择的用户名",userId)
+	beego.Info("隐藏域选择的用户名", userId)
 	userInfo := models.UserInfo{}
 	newOrm := orm.NewOrm()
-	newOrm.QueryTable("user_info").Filter("id",userId).One(&userInfo)
-	newOrm.LoadRelated(&userInfo,"Roles")
+	newOrm.QueryTable("user_info").Filter("id", userId).One(&userInfo)
+	newOrm.LoadRelated(&userInfo, "Roles")
 	queryM2M := newOrm.QueryM2M(&userInfo, "Roles")
-	for _,role := range userInfo.Roles{
+	for _, role := range userInfo.Roles {
 		queryM2M.Remove(role)
 	}
 	roleInfo := models.RoleInfo{}
-	for i:=0;i<len(list);i++{
-		newOrm.QueryTable("role_info").Filter("id",list[i]).One(&roleInfo)
+	for i := 0; i < len(list); i++ {
+		newOrm.QueryTable("role_info").Filter("id", list[i]).One(&roleInfo)
 		queryM2M.Add(roleInfo)
 	}
-	this.Data["json"]=map[string]interface{}{"flag":"ok"}
+	this.Data["json"] = map[string]interface{}{"flag": "ok"}
 	this.ServeJSON()
+}
+
+/**
+展示用户所拥有的权限和能否使用的权限
+ */
+func (this *UserInfoController) ShowSetUserAction() {
+	userId, _ := this.GetInt("userId")
+	newOrm := orm.NewOrm()
+	userInfo := models.UserInfo{}
+	newOrm.QueryTable("user_info").Filter("id", userId).One(&userInfo)
+	//查询用户已经有的权限
+	userActions := []models.UserAction{}
+	newOrm.QueryTable("user_action").Filter("users_id", userId).All(&userActions)
+	//查询所有权限
+	actionInfos := []models.ActionInfo{}
+	newOrm.QueryTable("action_info").Filter("del_flag", 0).All(&actionInfos)
+	this.Data["userActions"] = userActions //用户已有权限集合
+	this.Data["actionInfos"] = actionInfos //系统的全部权限
+	this.Data["userInfo"] = userInfo
+	this.TplName = "UserInfo/ShowSetUserAction.html"
+}
+
+func (this *UserInfoController) DeleteUserAction() {
+	//删除权限
+}
+func (this *UserInfoController) SetUserAction() {
+	//设置权限
 }

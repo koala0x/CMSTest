@@ -14,6 +14,9 @@ func init() {
 	beego.Router("/Admin/UserInfo/EditUserInfo", &controllers.UserInfoController{}, "post:EditUserInfo")
 	beego.Router("/Admin/UserInfo/ShowSetUserRole", &controllers.UserInfoController{}, "get:ShowSetUserRole")
 	beego.Router("/Admin/UserInfo/SetUserRole", &controllers.UserInfoController{}, "post:SetUserRole")
+	beego.Router("/Admin/UserInfo/ShowSetUserAction", &controllers.UserInfoController{}, "get:ShowSetUserAction")
+	beego.Router("/Admin/UserInfo/DeleteUserAction", &controllers.UserInfoController{}, "post:DeleteUserAction")
+	beego.Router("/Admin/UserInfo/SetUserAction", &controllers.UserInfoController{}, "post:SetUserAction")
 	//------------------------------角色管理----------------------------------
 	beego.Router("/Admin/RoleInfo/Index", &controllers.RoleInfoController{}, "get:Index")
 	beego.Router("/Admin/RoleInfo/ShowAddRole", &controllers.RoleInfoController{}, "get:ShowAddRole")

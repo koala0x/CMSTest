@@ -12,5 +12,4 @@ func (this *HomeController) ShowIndex() {
 
 func (this *HomeController) Index() {
 	this.TplName = "Home/Index.html"
-
 }

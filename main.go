@@ -24,6 +24,28 @@ func init() {
 	logs.SetLogger(logs.AdapterFile, `{"filename":"CMSTest.log","level":3}`)
 }
 
+func CheckUserAction(userActions []models.UserAction, actionId int) (b bool) { //判断用户是否拥有该权限
+	b = false
+	for i := 0; i < len(userActions); i++ {
+		if actionId == userActions[i].Actions.Id {
+			b = true
+		}
+	}
+	return
+}
+
+func CheckPassUserAction(userActions []models.UserAction, actionId int) (b bool) { //判断用户是否可以使用该权限
+	b = false
+	for i := 0; i < len(userActions); i++ {
+		if actionId == userActions[i].Actions.Id {
+			if userActions[i].IsPass == 1 {
+				b = true
+			}
+		}
+	}
+	return
+}
+
 func CheckUserRole(userInfo models.UserInfo, roleId int) bool {
 	check := false
 	for i := 0; i < len(userInfo.Roles); i++ {
@@ -49,5 +71,7 @@ func ShowActionInfo(info []*models.ActionInfo, roleId int) (b bool) {
 func main() {
 	beego.AddFuncMap("checkUserRole", CheckUserRole) //模板函数的定义
 	beego.AddFuncMap("showActionInfo", ShowActionInfo)
+	beego.AddFuncMap("checkUserAction", CheckUserAction)         //判断用户是否拥有该权限,接着还要判断用是否能够使用该权限
+	beego.AddFuncMap("checkPassUserAction", CheckPassUserAction) //判断用是否能够使用该权限
 	beego.Run()
 }

@@ -16,6 +16,8 @@
             $("#editDiv").css("display", "none");
             //角色权限配置
             $('#setRoleDiv').css("display", "none")
+            //用户权限分配
+            $('#setActionDiv').css("display", "none")
             //搜索
             $('#btnSearch').click(function () {
                 var pars = {
@@ -84,6 +86,52 @@
                     handler: function () {
                         //设置用户角色
                         showSetUserRole()
+                    }
+                }, {
+                    id: "btnSetUserAction",
+                    text: "为用户分配权限",
+                    iconCls: "icon-edit",
+                    handler: function () {
+                        //为用户分配权限
+                        showSetUserAction()
+                    }
+                }
+                ]
+            });
+        }
+
+        //为用户分配权限
+        function showSetUserAction() {
+            var rows = $('#tt').datagrid('getSelections');
+            if (rows.length != 1) {
+                $.messager.alert("提示", "你会分配权限吗？", "error");
+                return;
+            }
+            var userId = rows[0].Id;//给该用户分配权限。
+            //动态的位iframe添加内容
+            $("#setActionFrame").attr("src", "/Admin/UserInfo/ShowSetUserAction?userId=" + userId);
+            //将iFrame展示出来
+            $("#setActionDiv").css("display", "block");
+            $("#setActionDiv").dialog({
+                title: '为用户分配权限信息',
+                width: 700,
+                height: 400,
+                collapsible: true, //可折叠
+                maximizable: true, //最大化
+                resizable: true,//可缩放
+                modal: true,//模态，表示只有将该窗口关闭才能修改页面中其它内容
+                buttons: [{ //按钮组
+                    text: 'Ok',//按钮上的文字
+                    iconCls: 'icon-ok',
+                    handler: function () {
+                        //1:获取表单中的数据
+                        //2:发送服务端。
+
+                    }
+                }, {
+                    text: 'Cancel',
+                    handler: function () {
+                        $('#setActionDiv').dialog('close');
                     }
                 }]
             });
@@ -299,8 +347,13 @@
         </table>
     </form>
 </div>
+{{/*为用户设置角色*/}}
 <div id="setRoleDiv">
     <iframe id="setRoleFrame" frameborder="0" width="100%" height="100%"></iframe>
+</div>
+{{/*为用户分配权限*/}}
+<div id="setActionDiv">
+    <iframe id="setActionFrame" frameborder="0" width="100%" height="100%"></iframe>
 </div>
 </body>
 </html>
