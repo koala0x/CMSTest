@@ -28,5 +28,6 @@ func init() {
 	beego.Router("/Admin/ActionInfo/AddAction", &controllers.ActionInfoController{}, "post:AddAction")
 	beego.Router("/Admin/ActionInfo/GetActionInfo", &controllers.ActionInfoController{}, "post:GetActionInfo")
 	//----------------------------后台-----------------------------
-	beego.Router("/Admin/Home/Index", &controllers.HomeController{}, "get:ShowIndex")
+	beego.Router("/Admin/Home/ShowIndex", &controllers.HomeController{}, "get:ShowIndex")
+	beego.Router("/Admin/Home/Index", &controllers.HomeController{}, "get:Index")
 }
